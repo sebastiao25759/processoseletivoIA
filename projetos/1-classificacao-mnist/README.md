@@ -85,28 +85,57 @@ projetos/1-classificacao-mnist/
 
 ## 📝 Relatório do Candidato
 
-👤 **Nome Completo:**
+👤 **Nome Completo: Sebastião Araujo Rodrigues**
 
 ### 1️⃣ Resumo da Arquitetura do Modelo
 
-Descreva, em palavras, a arquitetura da CNN implementada em `train_model.py` (número de blocos convolucionais, uso de batch normalization/dropout, estratégia de validação/early stopping).
+O modelo implementado em train_model.py consiste em uma Rede Neural Convolucional (CNN) para classificação de imagens. A arquitetura é composta por blocos convolucionais formados por camadas Conv2D seguidas de BatchNormalization e funções de ativação, com camadas de MaxPooling2D para redução da dimensionalidade espacial. Também foi utilizado Dropout para reduzir o risco de overfitting durante o treinamento.
+
+Após os blocos convolucionais, a saída é achatada (Flatten) e conectada a camadas totalmente conectadas (Dense), finalizando com uma camada de saída utilizando a função de ativação Softmax para classificação.
+
+Durante o treinamento foi utilizada uma estratégia de validação com conjunto de validação separado, além de EarlyStopping, que interrompe o treinamento quando a perda de validação deixa de melhorar por um determinado número de épocas, restaurando os melhores pesos encontrados.
 
 ### 2️⃣ Bibliotecas Utilizadas
 
-Liste as principais bibliotecas utilizadas, preferencialmente com suas versões.
+- Python 3.10
+- TensorFlow 2.21
+- Keras 3.12.3
+- NumPy 2.2.6
 
 ### 3️⃣ Técnica de Otimização do Modelo
 
-Explique qual técnica foi utilizada para otimizar o modelo em `optimize_model.py`.
+A otimização foi realizada por meio da Dynamic Range Quantization durante a conversão do modelo TensorFlow/Keras (model.h5) para o formato TensorFlow Lite (model.tflite).
+
+Essa técnica reduz o tamanho do modelo ao quantizar os pesos de ponto flutuante para inteiros de 8 bits, mantendo as ativações em ponto flutuante durante a inferência. Como resultado, o modelo ocupa menos espaço em armazenamento e, em muitos cenários, apresenta inferências mais rápidas, preservando um bom nível de precisão.
 
 ### 4️⃣ Resultados Obtidos
 
-Informe a acurácia de validação obtida e o tamanho dos arquivos `model.h5` e `model.tflite`.
+- Acurácia no conjunto de validação: 99%
+- Tamanho do modelo original (model.h5): 2,84 MB
+- Tamanho do modelo otimizado (model.tflite): 0,24 MB
 
 ### 5️⃣ Comentários Adicionais (Opcional)
 
-Dificuldades encontradas, decisões técnicas importantes, limitações do modelo, aprendizados durante o desafio.
+A principal dificuldade encontrada durante o desenvolvimento ocorreu na execução do workflow do GitHub Actions utilizando o **Python 3.11**. Nessa configuração, as bibliotecas TensorFlow e Keras apresentavam incompatibilidade ao carregar o arquivo `model.h5`, resultando no erro relacionado à desserialização da camada `InputLayer`, com argumentos como `batch_shape` e `optional` não reconhecidos.
+
+Para investigar a causa do problema, realizei testes **na minha máquina**, utilizando diferentes versões do Python, TensorFlow e Keras. Esses testes permitiram identificar que o erro estava relacionado à compatibilidade entre essas versões, explicando o comportamento observado durante a execução do workflow no GitHub Actions.
+
+Também foi realizada uma tentativa de utilizar a técnica de **Full Integer Quantization** para obter uma otimização ainda maior do modelo. Entretanto, durante a execução dos testes do workflow, a acurácia do modelo caiu para aproximadamente **13%**, fazendo com que ele não atendesse aos critérios mínimos de desempenho estabelecidos. Por esse motivo, optou-se pela **Dynamic Range Quantization**, que apresentou uma redução significativa no tamanho do modelo, preservando uma acurácia de validação de **99%** e garantindo a aprovação nos testes automatizados.
+
+Além disso, a utilização de Batch Normalization, Dropout, Early Stopping e da técnica de Dynamic Range Quantization contribuiu para obter um modelo com boa capacidade de generalização, menor tamanho e adequado para inferência em TensorFlow Lite.
 
 ### 6️⃣ Exemplo de Inferência
 
-Cole a saída do terminal ao rodar `run_inference.py` (predito vs. real para as 5+ amostras), e comente brevemente se houve algum caso interessante (acerto ou erro) entre as amostras testadas.
+```text
+Rodando inferência em 5 amostras usando model.tflite:
+
+Amostra 1: predito=7 | real=7
+Amostra 2: predito=2 | real=2
+Amostra 3: predito=1 | real=1
+Amostra 4: predito=0 | real=0
+Amostra 5: predito=4 | real=4
+```
+
+**Comentário**
+
+Nas cinco amostras testadas, o modelo classificou corretamente todos os dígitos, obtendo 100% de acerto nesse conjunto de inferência. Esse resultado demonstra que o modelo convertido para TensorFlow Lite manteve seu desempenho após a aplicação da Dynamic Range Quantization. Entretanto, essa avaliação representa apenas uma pequena amostra, sendo a acurácia de validação a métrica mais representativa para avaliar o desempenho geral do modelo.
